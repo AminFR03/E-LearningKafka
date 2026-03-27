@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KafkaHub | Enterprise E-Learning</title>
+    <!-- Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for standard icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="auth-screen" class="split-layout active">
+        <div class="auth-left">
+            <div class="auth-hero-text">
+                <i class="fa-solid fa-infinity hero-icon"></i>
+                <h1 class="gradient-text">KafkaHub Learning</h1>
+                <p>Welcome to the future of asynchronous, event-driven education. Real-time updates, decoupling logic, and infinite scalability.</p>
+            </div>
+            <div class="glow-orb orb-1"></div>
+            <div class="glow-orb orb-2"></div>
+        </div>
+        
+        <div class="auth-right">
+            <div class="form-container">
+                <div class="auth-tabs">
+                    <button id="tab-login" class="active-tab" onclick="switchAuthTab('login')">Log In</button>
+                    <button id="tab-register" onclick="switchAuthTab('register')">Sign Up</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form">
+                    <h2>Welcome back</h2>
+                    <p class="sub-text">Please enter your details to sign in.</p>
+                    
+                    <div class="input-group">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" id="login-email" placeholder="Email address" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Sign In <i class="fa-solid fa-arrow-right"></i></button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="hidden">
+                    <h2>Create an Account</h2>
+                    <p class="sub-text">Join the platform to access thousands of courses.</p>
+                    
+                    <div class="input-group">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" id="reg-name" placeholder="Full Name" required>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" id="reg-email" placeholder="Email address" required>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fa-solid fa-briefcase"></i>
+                        <select id="reg-role" required>
+                            <option value="" disabled selected>Select your Role</option>
+                            <option value="student">Student</option>
+                            <option value="professor">Professor</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Create Account <i class="fa-solid fa-check"></i></button>
+                </form>
+
+                <p id="auth-status" class="status-msg"></p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MAIN APPLICATION DASHBOARD -->
+    <div id="app-layout" class="app-layout hidden">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-infinity brand-icon"></i>
+                <span class="brand-name">KafkaHub</span>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Nav dynamically populated depending on Student/Professor -->
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Top Navbar -->
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" placeholder="Search courses, professors, topics...">
+                </div>
+                <div class="user-profile">
+                    <div class="notification-bell">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="profile-pill">
+                        <img src="https://ui-avatars.com/api/?name=User&background=2563eb&color=fff" id="user-avatar" alt="Avatar">
+                        <span id="user-name-display">User Name</span>
+                        <i class="fa-solid fa-chevron-down drop-icon"></i>
+                    </div>
+                    <button onclick="logout()" class="btn-secondary logout-btn" title="Log Out"><i class="fa-solid fa-power-off"></i></button>
+                </div>
+            </header>
+
+            <!-- Dashboard Views Container -->
+            <div class="scrollable-views">
+                
+                <!-- ================= STUDENT VIEWS ================= -->
+                
+                <!-- Student Dashboard Overview -->
+                <section id="student-overview" class="view-section active">
+                    <div class="section-header">
+                        <div>
+                            <h1>My Learning Dashboard</h1>
+                            <p>Track your progress and pick up where you left off.</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fa-solid fa-book-open"></i>
+                            <div class="stat-info">
+                                <h3>Courses Enrolled</h3>
+                                <p id="stat-enrolled-count">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa-solid fa-award"></i>
+                            <div class="stat-info">
+                                <h3>Certificates Earned</h3>
+                                <p>0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa-solid fa-fire"></i>
+                            <div class="stat-info">
+                                <h3>Day Streak</h3>
+                                <p>12 Days</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="sub-heading">My Active Courses</h2>
+                    <div id="student-active-courses" class="card-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Student Browse Courses -->
+                <section id="student-browse" class="view-section hidden">
+                    <div class="section-header">
+                        <div>
+                            <h1>Course Catalog</h1>
+                            <p>Enroll in new topics to instantly subscribe your Kafka Consumer.</p>
+                        </div>
+                    </div>
+                    <div id="student-catalog" class="card-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
+
+
+                <!-- ================= PROFESSOR VIEWS ================= -->
+
+                <!-- Professor Overview -->
+                <section id="prof-overview" class="view-section hidden">
+                    <div class="section-header">
+                        <div>
+                            <h1>Professor Dashboard</h1>
+                            <p>Manage your curriculum and dispatch Kafka events globally.</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card prof-stat">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                            <div class="stat-info">
+                                <h3>Active Courses</h3>
+                                <p id="prof-course-count">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card prof-stat">
+                            <i class="fa-solid fa-users"></i>
+                            <div class="stat-info">
+                                <h3>Total Students</h3>
+                                <p>Global Reach</p>
+                            </div>
+                        </div>
+                        <div class="stat-card prof-stat">
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                            <div class="stat-info">
+                                <h3>Emails Dispatched</h3>
+                                <p>Kafka Linked</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="sub-heading">Your Managed Courses</h2>
+                    <div id="prof-active-courses" class="card-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Professor Studio (Create/Update) -->
+                <section id="prof-studio" class="view-section hidden">
+                    <div class="section-header">
+                        <div>
+                            <h1>Authoring Studio</h1>
+                            <p>Create new endpoints (Topics) or trigger updates (Producer).</p>
+                        </div>
+                    </div>
+
+                    <div class="studio-layout">
+                        
+                        <!-- Create Course Form -->
+                        <div class="form-card elevate">
+                            <h3><i class="fa-solid fa-plus-circle"></i> Create New Course</h3>
+                            <form id="form-create-course">
+                                <div class="input-group dark">
+                                    <label>Course Title</label>
+                                    <input type="text" id="new-course-title" placeholder="e.g. Masterclass Event Streaming" required>
+                                </div>
+                                <div class="input-group dark">
+                                    <label>Detailed Description</label>
+                                    <textarea id="new-course-desc" rows="4" placeholder="Course syllabus and details..." required></textarea>
+                                </div>
+                                <button class="btn-primary w-full" type="submit">Publish to Kafka <i class="fa-solid fa-rocket"></i></button>
+                            </form>
+                        </div>
+
+                        <!-- Update Course Form -->
+                        <div class="form-card elevate">
+                            <h3><i class="fa-solid fa-pen-to-square"></i> Issue Course Update</h3>
+                            <p class="helper-text" style="margin-bottom:1rem;color:#94a3b8;font-size:0.9rem;">This explicitly triggers your Producer to fire an event to the Topic, resulting in an email to enrolled students!</p>
+                            <form id="form-update-course">
+                                <div class="input-group dark">
+                                    <label>Select Target Course</label>
+                                    <select id="update-course-select" required>
+                                        <!-- Populated -->
+                                    </select>
+                                </div>
+                                <div class="input-group dark">
+                                    <label>New Title (Optional)</label>
+                                    <input type="text" id="update-course-title" placeholder="Leave blank to keep current">
+                                </div>
+                                <div class="input-group dark">
+                                    <label>New Description</label>
+                                    <textarea id="update-course-desc" rows="3" placeholder="Explain what updated..." required></textarea>
+                                </div>
+                                <button class="btn-secondary w-full" type="submit">Dispatch Event <i class="fa-solid fa-paper-plane"></i></button>
+                            </form>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
