@@ -1,0 +1,56 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Alice",
+      "role": "student",
+      "email": "alice@student.com"
+    },
+    {
+      "id": 2,
+      "name": "Bob",
+      "role": "student",
+      "email": "bob@student.com"
+    },
+    {
+      "id": 3,
+      "name": "Dr. Smith",
+      "role": "professor",
+      "email": "smith@univ.edu"
+    },
+    {
+      "id": 4,
+      "name": "Amin Frikha",
+      "role": "professor",
+      "email": "amin.frikha03@gmail.com"
+    },
+    {
+      "id": 5,
+      "name": "Donia Bahloul",
+      "role": "student",
+      "email": "donia.bahloul@enis.tn"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "title": "Introduction to Node.js",
+      "description": "Learn basics of Node.js"
+    },
+    {
+      "id": 2,
+      "title": "React for Beginners",
+      "description": "Start building UIs"
+    }
+  ],
+  "enrollments": {
+    "1": [
+      1,
+      2
+    ],
+    "2": [
+      1,
+      5
+    ]
+  }
+}

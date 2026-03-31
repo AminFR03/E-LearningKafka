@@ -6,26 +6,16 @@ const { produceMessage } = require('./kafkaProducer');
 const { createOrUpdateStudentConsumer } = require('./kafkaConsumer');
 const { createKafkaTopic } = require('./kafkaAdmin');
 const { sendEmailNotification } = require('./emailService');
+const { db, save } = require('./db');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-global.courses = [
-    { id: 1, title: 'Introduction to Node.js', description: 'Learn basics of Node.js' },
-    { id: 2, title: 'React for Beginners', description: 'Start building UIs' }
-];
-
-global.users = [
-    { id: 1, name: 'Alice', role: 'student', email: 'alice@student.com' },
-    { id: 2, name: 'Bob', role: 'student', email: 'bob@student.com' },
-    { id: 3, name: 'Dr. Smith', role: 'professor', email: 'smith@univ.edu' }
-];
-
-global.enrollments = {
-    1: [1, 2],
-    2: [1]
-};
+// Data is now loaded from db.json (persisted across restarts)
+global.courses = db.courses;
+global.users = db.users;
+global.enrollments = db.enrollments;
 
 app.get('/api/users', (req, res) => {
     res.json(global.users);
@@ -36,8 +26,11 @@ app.post('/api/users/register', async (req, res) => {
     if (global.users.find(u => u.email === email)) {
         return res.status(400).json({ message: 'Email already exists' });
     }
-    const newUser = { id: global.users.length + 1, name, role, email };
+    // Generate ID safely: max existing ID + 1
+    const maxId = global.users.reduce((max, u) => Math.max(max, u.id), 0);
+    const newUser = { id: maxId + 1, name, role, email };
     global.users.push(newUser);
+    save(db); // persist to disk
     
     if (role === 'student') {
         await createOrUpdateStudentConsumer(newUser);
@@ -72,6 +65,7 @@ app.post('/api/courses/enroll', async (req, res) => {
         return res.json({ message: 'Already enrolled' });
     }
     global.enrollments[courseId].push(userId);
+    save(db); // persist to disk
     
     // Send a single direct welcome email to the student
     const student = global.users.find(u => u.id === userId);
@@ -105,13 +99,16 @@ app.get('/api/enrollments/:userId', (req, res) => {
 
 app.post('/api/courses', async (req, res) => {
     const { title, description } = req.body;
+    // Generate ID safely: max existing ID + 1
+    const maxId = global.courses.reduce((max, c) => Math.max(max, c.id), 0);
     const newCourse = {
-        id: global.courses.length + 1,
+        id: maxId + 1,
         title,
         description
     };
     global.courses.push(newCourse);
     global.enrollments[newCourse.id] = [];
+    save(db); // persist to disk
     
     const topicName = `course-${newCourse.id}`;
     await createKafkaTopic(topicName);
@@ -127,6 +124,7 @@ app.put('/api/courses/:id', async (req, res) => {
     if (courseIndex > -1) {
         global.courses[courseIndex].title = title || global.courses[courseIndex].title;
         global.courses[courseIndex].description = description || global.courses[courseIndex].description;
+        save(db); // persist to disk
         
         const topicName = `course-${courseId}`;
         
@@ -149,7 +147,8 @@ const PORT = 3000;
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT}`);
     
-    // Create base topics for the mock courses on startup so they exist!
-    await createKafkaTopic('course-1');
-    await createKafkaTopic('course-2');
+    // Create Kafka topics for all existing courses on startup
+    for (const course of global.courses) {
+        await createKafkaTopic(`course-${course.id}`);
+    }
 });
