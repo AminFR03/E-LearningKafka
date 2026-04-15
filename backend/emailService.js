@@ -22,9 +22,9 @@ async function sendEmailNotification(to, subject, text) {
             text: text,
         });
 
-        console.log("Real Email sent successfully! Message ID: %s", info.messageId);
+        console.log(`[Email] ✅ Success! To: ${to} | Subject: "${subject}" | MsgID: ${info.messageId}`);
     } catch (error) {
-        console.error("Failed to send real email", error);
+        console.error(`[Email] ❌ Failed to send to ${to}. Error:`, error.message);
     }
 }
 

@@ -263,6 +263,9 @@ async function fetchAndRenderProfData() {
         const select = document.getElementById('update-course-select');
         select.innerHTML = '<option value="" disabled selected>Select a course to interact with...</option>';
 
+        const lessonSelect = document.getElementById('update-lesson-select');
+        if (lessonSelect) lessonSelect.innerHTML = '<option value="" disabled selected>Select a course to push a lesson to...</option>';
+
         allCoursesCache.forEach(course => {
             const card = document.createElement('div');
             card.className = 'course-card';
@@ -281,6 +284,11 @@ async function fetchAndRenderProfData() {
             option.value = course.id;
             option.textContent = `[ID: ${course.id}] ${course.title}`;
             select.appendChild(option);
+
+            if (lessonSelect) {
+                const lessonOption = option.cloneNode(true);
+                lessonSelect.appendChild(lessonOption);
+            }
         });
     } catch (err) { console.error(err); }
 }
@@ -334,5 +342,32 @@ document.getElementById('form-update-course').addEventListener('submit', async (
     } catch (err) {
         btn.innerHTML = 'Dispatch Event <i class="fa-solid fa-paper-plane"></i>';
         showToast('Failed to dispatch event.', 'error');
+    }
+});
+
+document.getElementById('form-update-lesson').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const courseId = document.getElementById('update-lesson-select').value;
+    const lessonTitle = document.getElementById('update-lesson-title').value;
+
+    if (!courseId) return showToast('Please select a course.', 'error');
+    
+    const btn = e.target.querySelector('button');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pushing...';
+
+    try {
+        await fetch(`${API_URL}/courses/${courseId}/lesson`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lessonTitle })
+        });
+        btn.innerHTML = originalHTML;
+        showToast(`Lesson update dispatched! Students of course ${courseId} notified via Kafka.`, 'success');
+        document.getElementById('form-update-lesson').reset();
+        fetchAndRenderProfData();
+    } catch (err) {
+        btn.innerHTML = originalHTML;
+        showToast('Failed to push lesson.', 'error');
     }
 });

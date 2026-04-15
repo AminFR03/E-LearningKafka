@@ -1,24 +1,6 @@
 {
   "users": [
     {
-      "id": 1,
-      "name": "Alice",
-      "role": "student",
-      "email": "alice@student.com"
-    },
-    {
-      "id": 2,
-      "name": "Bob",
-      "role": "student",
-      "email": "bob@student.com"
-    },
-    {
-      "id": 3,
-      "name": "Dr. Smith",
-      "role": "professor",
-      "email": "smith@univ.edu"
-    },
-    {
       "id": 4,
       "name": "Amin Frikha",
       "role": "professor",
@@ -34,22 +16,26 @@
   "courses": [
     {
       "id": 1,
-      "title": "Introduction to Node.js",
-      "description": "Learn basics of Node.js"
+      "title": "Mastering Kafka Producers",
+      "description": "Deep dive into message publishing, partitioning strategies, and idempotency.",
+      "lastLesson": "Introduction to Producer APIs"
     },
     {
       "id": 2,
-      "title": "React for Beginners",
-      "description": "Start building UIs"
+      "title": "Kafka Consumer Strategies",
+      "description": "Learn consumer groups, rebalancing, and offset management.",
+      "lastLesson": "Consumer Group Fundamentals"
+    },
+    {
+      "id": 3,
+      "title": "Edited the example",
+      "description": "Edit"
     }
   ],
   "enrollments": {
-    "1": [
-      1,
-      2
-    ],
-    "2": [
-      1,
+    "1": [],
+    "2": [],
+    "3": [
       5
     ]
   }

@@ -240,7 +240,7 @@
                             </form>
                         </div>
 
-                        <!-- Update Course Form -->
+                         <!-- Update Course Form -->
                         <div class="form-card elevate">
                             <h3><i class="fa-solid fa-pen-to-square"></i> Issue Course Update</h3>
                             <p class="helper-text" style="margin-bottom:1rem;color:#94a3b8;font-size:0.9rem;">This explicitly triggers your Producer to fire an event to the Topic, resulting in an email to enrolled students!</p>
@@ -259,7 +259,26 @@
                                     <label>New Description</label>
                                     <textarea id="update-course-desc" rows="3" placeholder="Explain what updated..." required></textarea>
                                 </div>
-                                <button class="btn-secondary w-full" type="submit">Dispatch Event <i class="fa-solid fa-paper-plane"></i></button>
+                                <button class="btn-secondary w-full" type="submit">Dispatch Update <i class="fa-solid fa-paper-plane"></i></button>
+                            </form>
+                        </div>
+
+                        <!-- Push Lesson Form [NEW] -->
+                        <div class="form-card elevate">
+                            <h3><i class="fa-solid fa-file-arrow-up"></i> Push Lesson Update</h3>
+                            <p class="helper-text" style="margin-bottom:1rem;color:#94a3b8;font-size:0.9rem;">Notify students about a specific new lesson or content drop.</p>
+                            <form id="form-update-lesson">
+                                <div class="input-group dark">
+                                    <label>Select Target Course</label>
+                                    <select id="update-lesson-select" required>
+                                        <!-- Populated -->
+                                    </select>
+                                </div>
+                                <div class="input-group dark">
+                                    <label>Lesson Title</label>
+                                    <input type="text" id="update-lesson-title" placeholder="e.g. 05 - Deep Dive into Offsets" required>
+                                </div>
+                                <button class="btn-primary w-full" type="submit">Push Lesson <i class="fa-solid fa-bullhorn"></i></button>
                             </form>
                         </div>
 

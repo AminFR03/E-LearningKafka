@@ -31,11 +31,11 @@ app.post('/api/users/register', async (req, res) => {
     const newUser = { id: maxId + 1, name, role, email };
     global.users.push(newUser);
     save(db); // persist to disk
-    
+
     if (role === 'student') {
         await createOrUpdateStudentConsumer(newUser);
     }
-    
+
     res.json(newUser);
 });
 
@@ -66,7 +66,7 @@ app.post('/api/courses/enroll', async (req, res) => {
     }
     global.enrollments[courseId].push(userId);
     save(db); // persist to disk
-    
+
     // Send a single direct welcome email to the student
     const student = global.users.find(u => u.id === userId);
     const course = global.courses.find(c => c.id === courseId);
@@ -77,12 +77,12 @@ app.post('/api/courses/enroll', async (req, res) => {
             `Hello ${student.name},\n\nYou have been successfully enrolled in "${course.title}".\nDescription: ${course.description}\n\nYou will now receive email notifications whenever the professor updates this course.\n\nHappy Learning!`
         );
     }
-    
+
     // Refresh the student's personal Kafka consumer so it subscribes to this new topic
     if (student) {
         await createOrUpdateStudentConsumer(student);
     }
-    
+
     res.json({ message: 'Enrolled successfully' });
 });
 
@@ -109,7 +109,7 @@ app.post('/api/courses', async (req, res) => {
     global.courses.push(newCourse);
     global.enrollments[newCourse.id] = [];
     save(db); // persist to disk
-    
+
     const topicName = `course-${newCourse.id}`;
     await createKafkaTopic(topicName);
 
@@ -119,24 +119,81 @@ app.post('/api/courses', async (req, res) => {
 app.put('/api/courses/:id', async (req, res) => {
     const courseId = parseInt(req.params.id);
     const { title, description } = req.body;
-    
+
     const courseIndex = global.courses.findIndex(c => c.id === courseId);
     if (courseIndex > -1) {
         global.courses[courseIndex].title = title || global.courses[courseIndex].title;
         global.courses[courseIndex].description = description || global.courses[courseIndex].description;
         save(db); // persist to disk
-        
+
         const topicName = `course-${courseId}`;
-        
-        // Produce Kafka event to exact topic
+        const updatedCourse = global.courses[courseIndex];
+
+        console.log(`[Update] Dispatching COURSE_UPDATED event for course ${courseId}`);
+
+        // Produce Kafka event
         await produceMessage(topicName, {
             action: 'COURSE_UPDATED',
             courseId,
-            title: global.courses[courseIndex].title,
-            description: global.courses[courseIndex].description
+            title: updatedCourse.title,
+            description: updatedCourse.description
         });
 
-        res.json({ message: 'Course updated', course: global.courses[courseIndex] });
+        // Reliable fallback: Direct email
+        const enrolledInThisCourse = global.enrollments[courseId] || [];
+        for (const studentId of enrolledInThisCourse) {
+            const student = global.users.find(u => u.id === studentId && u.role === 'student');
+            if (student) {
+                await sendEmailNotification(
+                    student.email,
+                    `📚 Course Updated: ${updatedCourse.title}`,
+                    `Hello ${student.name},\n\nThe professor has updated the course you are enrolled in:\n\n📖 Course: "${updatedCourse.title}"\n📝 Description: ${updatedCourse.description}\n\nLog in to check out the latest content!\n\nHappy Learning!`
+                );
+            }
+        }
+
+        res.json({ message: 'Course updated', course: updatedCourse });
+    } else {
+        res.status(404).json({ message: 'Course not found' });
+    }
+});
+
+app.put('/api/courses/:id/lesson', async (req, res) => {
+    const courseId = parseInt(req.params.id);
+    const { lessonTitle } = req.body;
+
+    const courseIndex = global.courses.findIndex(c => c.id === courseId);
+    if (courseIndex > -1) {
+        global.courses[courseIndex].lastLesson = lessonTitle;
+        save(db); // persist to disk
+
+        const topicName = `course-${courseId}`;
+        const updatedCourse = global.courses[courseIndex];
+
+        console.log(`[Update] Dispatching LESSON_UPDATED event for course ${courseId}: ${lessonTitle}`);
+
+        // Produce Kafka event
+        await produceMessage(topicName, {
+            action: 'LESSON_UPDATED',
+            courseId,
+            title: updatedCourse.title,
+            lessonTitle: lessonTitle
+        });
+
+        // Reliable fallback: Direct email
+        const enrolledInThisCourse = global.enrollments[courseId] || [];
+        for (const studentId of enrolledInThisCourse) {
+            const student = global.users.find(u => u.id === studentId && u.role === 'student');
+            if (student) {
+                await sendEmailNotification(
+                    student.email,
+                    `🔔 New Lesson Added: ${lessonTitle}`,
+                    `Hello ${student.name},\n\nA new lesson has been added to your course "${updatedCourse.title}":\n\n📖 Lesson: "${lessonTitle}"\n\nGo to the platform to start learning now!\n\nHappy Learning!`
+                );
+            }
+        }
+
+        res.json({ message: 'Lesson updated', course: updatedCourse });
     } else {
         res.status(404).json({ message: 'Course not found' });
     }
@@ -146,9 +203,28 @@ const PORT = 3000;
 
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT}`);
-    
+
     // Create Kafka topics for all existing courses on startup
     for (const course of global.courses) {
         await createKafkaTopic(`course-${course.id}`);
+    }
+
+    // ✅ FIX: Bootstrap Kafka consumers for ALL currently enrolled students.
+    // Without this, if no student logs in after a server restart, their consumer
+    // never starts — Kafka events are produced but nobody receives them, so
+    // no email notification is ever sent on course update.
+    const enrolledStudentIds = new Set();
+    for (const studentIds of Object.values(global.enrollments)) {
+        for (const sid of studentIds) {
+            enrolledStudentIds.add(sid);
+        }
+    }
+
+    for (const sid of enrolledStudentIds) {
+        const student = global.users.find(u => u.id === sid && u.role === 'student');
+        if (student) {
+            console.log(`[Startup] Bootstrapping Kafka consumer for student: ${student.name}`);
+            await createOrUpdateStudentConsumer(student);
+        }
     }
 });

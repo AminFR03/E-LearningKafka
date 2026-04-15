@@ -43,11 +43,18 @@ const createOrUpdateStudentConsumer = async (student) => {
                 const event = JSON.parse(message.value.toString());
                 console.log(`[Kafka Consumer - ${student.name} | Topic: ${topic}] Received event:`, event);
 
-                const subject = event.action === 'COURSE_UPDATED' 
-                    ? `Course Updated: ${event.title}` 
-                    : `New Course Added: ${event.title}`;
-                    
-                const text = `Hello ${student.name},\n\nThe course "${event.title}" has been ${event.action === 'COURSE_UPDATED' ? 'updated' : 'added'}.\nDescription: ${event.description}\n\nHappy Learning!`;
+                let subject, text;
+
+                if (event.action === 'LESSON_UPDATED') {
+                    subject = `🔔 New Lesson: ${event.lessonTitle}`;
+                    text = `Hello ${student.name},\n\nThe course "${event.title}" has a new lesson: "${event.lessonTitle}".\n\nLog in to see the new content!\n\nHappy Learning!`;
+                } else {
+                    subject = event.action === 'COURSE_UPDATED' 
+                        ? `📚 Course Updated: ${event.title}` 
+                        : `✨ New Course Available: ${event.title}`;
+                        
+                    text = `Hello ${student.name},\n\nThe course "${event.title}" has been ${event.action === 'COURSE_UPDATED' ? 'updated' : 'added to the catalog'}.\nDescription: ${event.description}\n\nHappy Learning!`;
+                }
                 
                 sendEmailNotification(student.email, subject, text);
             },

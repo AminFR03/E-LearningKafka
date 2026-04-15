@@ -28,54 +28,76 @@ Uses `nodemailer` with an `ethereal.email` mock transport. This realistically si
 
 ---
 
-## 🚀 How To Make It Work (Step-by-Step)
+## 🚀 How To Run The Project (Step-by-Step)
+
+To see the event-driven notifications in action, you need three main components running simultaneously: **Kafka**, the **Node.js Backend**, and the **Web Frontend**.
 
 ### Prerequisites
-1. **Node.js** installed on your Windows machine.
-2. **Apache Kafka** binaries downloaded (e.g., `kafka_2.13-3.x.x.tgz`) and extracted on your machine (e.g., to `C:\kafka`).
+1. **Node.js**: Installed on your machine.
+2. **Apache Kafka**: Downloaded and extracted (e.g., to `C:\kafka`).
 
-### Step 1: Start Kafka Server Locally (KRaft Mode)
-Recent versions of Kafka use KRaft to manage the cluster without needing Zookeeper. Open a **command prompt window** and navigate to your extracted Kafka folder within this project (e.g., `cd path\to\KafkaWeb\kafka`).
+---
 
-**Generate a Cluster ID & Format Storage:**
-```bash
-.\bin\windows\kafka-storage.bat random-uuid
-```
-Copy the generated UUID from the output and use it in the next command to format your storage directory:
-```bash
-.\bin\windows\kafka-storage.bat format -t <YOUR_UUID_HERE> -c .\config\kraft\server.properties
-```
+### Step 1: Start Apache Kafka (KRaft Mode)
+Open a **Terminal window** and navigate to your Kafka installation directory (e.g., `cd path\to\KafkaWeb\kafka`).
 
-**Start Kafka Server:**
-Now run the server using the KRaft configuration:
-```bash
-.\bin\windows\kafka-server-start.bat .\config\kraft\server.properties
-```
-*Leave this terminal running in the background.*
+1. **Generate a Cluster ID**:
+   Run this command and **copy the unique ID** it outputs (e.g., `kYQe2SU...`):
+   ```powershell
+   .\bin\windows\kafka-storage.bat random-uuid
+   ```
 
-### Step 2: Set Up and Run the Backend
-Open a **third terminal window**, navigate to the `backend` folder of this project, and run:
-```bash
-cd path\to\KafkaWeb\backend
+2. **Format the Storage Directory**:
+   Run this command, replacing `<YOUR_CLUSTER_ID>` with the ID you just copied:
+   ```powershell
+   .\bin\windows\kafka-storage.bat format -t <YOUR_CLUSTER_ID> -c .\config\kraft\server.properties
+   ```
+2. **Start Server**:
+   ```powershell
+   .\bin\windows\kafka-server-start.bat .\config\kraft\server.properties
+   ```
+   *Keep this window open.*
+
+---
+
+### Step 2: Start the Backend Server
+Open a **Second Terminal window**, navigate to the `backend` folder, and run:
+```powershell
+cd backend
 npm install
 node server.js
 ```
-*You should see a message saying:*
-`Server is running on port 3000`
-*(The Kafka consumer connects automatically immediately after).*
+*Note: The server will automatically connect to Kafka and bootstrap consumers for existing students.*
 
-### Step 3: Launch the Frontend
-1. Open the file `KafkaWeb/frontend/index.html` directly in any modern Web Browser (Chrome, Firefox, Edge).
-2. The vibrant interface will load!
+---
 
-### Step 4: Testing the Flow
-1. **Register as a Professor**: Click "Don't have an account? Register". Create an account with your email and select the "Professor" role.
-2. **Add a Course**: Fill out the title (e.g., "Advanced Kafka") and description. Click "Create Course". 
-   - *Look at your Backend Terminal*: You'll see a log saying `Produced event to topic course-notifications`!
-3. **Log out** (using the top right button) and **Register a new account as a Student** with a different email.
-4. **Enroll in the Topic/Course**: You will see the new course appear. Click **Enroll**.
-5. **Log out** and **Log back in using your Professor email**.
-6. **Update Course**: Select the course from the dropdown, add a new title/description, and click "Update Course".
-7. **Check the Magic in the Terminal**: Look at your backend terminal. It will log that the Kafka Consumer received the event, found your Student account's email, and sent a mock Email via Ethereal to the exact email address you registered with! It outputs a URL like `Preview URL: https://ethereal.email/message/...`. Click that link to visually see the exact email sent!
+### Step 3: Open the Web Frontend
+1. Locate `frontend/index.html`.
+2. Right-click and **Open with Browser** (Chrome or Edge recommended).
 
-You've now successfully utilized an asynchronous event-driven architecture using Apache Kafka!
+---
+
+### 🧪 Testing the Notification Flow
+
+1. **Log in as Professor**:
+   - Use: `amin.frikha03@gmail.com`
+   - You will see the **Professor Dashboard**.
+2. **Setup a Student**:
+   - Log out and register/login as a student (e.g., `donia.bahloul@enis.tn`).
+   - Find a course in **Browse Courses** and click **Enroll**.
+3. **Trigger a Notification**:
+   - Log back in as **Amin**.
+   - Go to **Authoring Studio**.
+   - **Scenario A (Course Update)**: Use "Issue Course Update" to change the description.
+   - **Scenario B (Lesson Update)**: Use the new "Push Lesson Update" form to add a lesson title (e.g. "Kafka Streams 101").
+4. **Verifying Result**:
+   - Watch the **Backend Terminal**. You will see:
+     - `[Update] Dispatching ... event`
+     - `[Email] ✅ Success! To: donia.bahloul@enis.tn ...`
+   - If Donia is logged in, you will also see the Kafka Consumer log the received event in real-time.
+
+---
+
+### Troubleshooting
+- **Kafka Connection Error**: Ensure Step 1 is completed and the terminal shows no errors. The backend assumes Kafka is at `localhost:9092`.
+- **Email Not Received**: Check the `.env` file in the `backend` folder. It should contain valid `EMAIL_USER` and `EMAIL_PASS` (e.g., a Gmail App Password).
